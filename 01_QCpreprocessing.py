@@ -6,10 +6,10 @@ from matplotlib.pyplot import rc_context
 import re
 
 # Load raw .h5ad file
-adata = sc.read('path/A11_A24_GEX_TCR_gene_annotate_unprocessed.h5ad')
+adata = sc.read('path/to/A11_A24_GEX_TCR_gene_annotate_unprocessed.h5ad')
 
 #add metadata
-meta = pd.read_csv('path/dengue_ss2_metadata.csv', index_col=0)
+meta = pd.read_csv('path/to/dengue_ss2_metadata.csv', index_col=0)
 adata.obs = adata.obs.join(meta)
 
 # Basic filtering
@@ -118,4 +118,4 @@ with rc_context({'figure.figsize': (4.5, 3)}):
     sc.pl.violin(adata, 'CD8_Cytotoxic_score', groupby='celltype', stripplot=False, inner='box')
 
 #savesfile
-adata.write(‘path/dengue_ss2_celltype_annotaion.h5ad’)
+adata.write(‘path/to/dengue_ss2_celltype_annotaion.h5ad’)
