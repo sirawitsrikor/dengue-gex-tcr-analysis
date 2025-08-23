@@ -97,7 +97,7 @@ ir.pp.ir_dist(adata_tcr, metric="levenshtein", sequence="aa", cutoff=2)
 ir.tl.define_clonotype_clusters(adata_tcr, sequence="aa", metric="levenshtein", receptor_arms="all", dual_ir="any")
 ir.tl.clonotype_network(adata_tcr, sequence="aa", metric="levenshtein", min_cells=2)
 
-# ---- Identify Shared Clonotypes ---- #
+# ---- Identify Shared Clonotypes across technological platforms ---- #
 shared_ids = (
     adata_tcr.obs.groupby('cc_aa_levenshtein')['batch'].nunique()
     .reset_index().query("batch > 1")['cc_aa_levenshtein']
@@ -144,7 +144,7 @@ ir.pl.group_abundance(
 )
 plt.show()
 
-#Visualize integrated celltype proportion 
+##Visualize integrated celltype proportion 
 # Step 1: Copy data and define expansion
 df = data.obs[(~data.obs['integrate_celltype'].isna())&(df['clinical_phase']=='Acute')]
 df['expansion'] = df['clone_id_size'].apply(lambda x: 'non-expanded' if x == 1 else 'expanded')
