@@ -10,7 +10,7 @@ plt.rcParams["savefig.format"] = "pdf"
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
 
-# ---- Load data ---- #
+# Load data 
 df = pd.read_csv('total_raw_data_CBA_dengue.csv')
 df_cell.to_csv('10x_predicted_celltype_expanded.csv', index_col = 0)
 
@@ -82,7 +82,7 @@ plt.yticks(rotation=0, fontsize=10)
 plt.title("CD8-Associated Cytokine Correlation (p < 0.05)", fontsize=14)
 plt.tight_layout()
 
-# ---- set function ---- 
+# set function
 def plot_var(var):
     r, p = stats.spearmanr(merged[target], merged[var])
 
@@ -99,8 +99,7 @@ def plot_var(var):
     fig.tight_layout()
     plt.show()
 
-
-# ---- Plot cytokine correlation---- #
+# Plot cytokine correlation
 for v in vars_to_plot:
     plot_var(v)
 
