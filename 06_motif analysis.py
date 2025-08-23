@@ -31,7 +31,7 @@ def plot_majority_cdr3_motifs(adata, cc_levenshtein, output_dir="cdr3_motifs"):
         # Filter for specific cluster
         filtered_seqs = chain_seqs[adata.obs["cc_aa_levenshtein"] == cc_levenshtein]
         if filtered_seqs.empty:
-            print(f"⚠️ No {chain} sequences in cluster {cc_levenshtein}")
+            print(f" No {chain} sequences in cluster {cc_levenshtein}")
             continue
 
         # Identify dominant CDR3 length
@@ -42,7 +42,7 @@ def plot_majority_cdr3_motifs(adata, cc_levenshtein, output_dir="cdr3_motifs"):
         )
 
         if mask.sum() == 0:
-            print(f"⚠️ No {chain} sequences of length {expected_length} in cluster {cc_levenshtein}")
+            print(f"No {chain} sequences of length {expected_length} in cluster {cc_levenshtein}")
             continue
 
         # Plot motif
@@ -54,16 +54,24 @@ def plot_majority_cdr3_motifs(adata, cc_levenshtein, output_dir="cdr3_motifs"):
         )
 
     plt.tight_layout()
-    save_path = os.path.join(output_dir, f"cdr3_logo_cluster_{cc_levenshtein}.pdf")
-    plt.savefig(save_path, bbox_inches="tight")
-    plt.close()
-    print(f"✅ Saved: {save_path}")
+    plt.show()
 
 # Load annotated dataset
-adata = sc.read("gts_cd8_ss2_10x_tcr_no_unidentified_cell.h5ad")
+adata = sc.read("path/gts_cd8_10x_ss2.h5ad")
 ir.io.upgrade_schema(adata)  # Upgrade IR format if needed
 
-# Plot motifs for selected clusters
-clusters = ["34", "43", "64", "100", "141", "222", "233"]
+share = (
+    adata.obs.groupby('cc_aa_levenshtein')['donor_id']
+    .nunique()          # number of unique donors for each cc_aa_levenshtein
+    .gt(2)              # keep only those with > 2 donors
+)
+
+share_list = share[share].index.tolist()
+print(share_list)
+
+
+# Plot motifs for selected clusters (shared at least 3 donors)
+share_list = ['36', '37', '48', '72', '108', '233']
 for cluster_id in clusters:
-    plot_majority_cdr3_motifs(adata, cc_levenshtein=cluster_id)
+    plot_majority_cdr3_motifs(adata, cc_levenshtein=share_list)
+print(share_list)
