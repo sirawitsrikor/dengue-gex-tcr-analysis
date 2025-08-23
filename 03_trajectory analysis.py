@@ -1,6 +1,8 @@
 import numpy as np
 import scanpy as sc
 
+adata= sc.read(‘path/dengue_ss2_celltype_annotaion.h5ad')
+
 # Step 1: Run PAGA on Leiden clusters
 sc.tl.paga(adata, groups="leiden")
 sc.pl.paga(adata, color="leiden", frameon=False)
@@ -30,7 +32,6 @@ sc.pl.paga_compare(
     fontsize=12,
     frameon=False,
     edges=True,
-    save="paga_compare.pdf",
 )
 
 # Step 4: Define root cluster and compute pseudotime
@@ -43,5 +44,5 @@ sc.pl.draw_graph(
     color=["leiden", "dpt_pseudotime"],
     legend_loc="on data",
     palette=custom_palette,
-    save="pseudotime.pdf",
 )
+
