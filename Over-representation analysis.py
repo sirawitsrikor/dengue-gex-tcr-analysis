@@ -1,6 +1,15 @@
 import pandas as pd
 import time
+Import scanpy as sc
 import gseapy as gp
+
+adata= sc.read(‘path/dengue_ss2_celltype_annotaion.h5ad')
+
+adata.uns['log1p']["base"] = None
+
+#find marker genes
+sc.tl.rank_genes_groups(adata, 'leiden', method='wilcoxon')
+sc.pl.rank_genes_groups(adata, n_genes=30, sharey=False)
 
 # Get DEG results
 result = adata_a.uns['rank_genes_groups']
@@ -53,3 +62,4 @@ for gid, label in group_keys.items():
 
 # Combine results
 df = pd.concat(all_results, ignore_index=True) if all_results else pd.DataFrame()
+
