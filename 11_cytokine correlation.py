@@ -6,46 +6,33 @@ from scipy import stats
 from scipy.cluster import hierarchy
 import os
 
-# ---- Setup ---- #
 plt.rcParams["savefig.format"] = "pdf"
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
 
-# ---- Load and clean cytokine data ---- #
-df = pd.read_excel("Raw_data_CBA_dengue .xlsx", sheet_name="sheet1").drop([0])
-df = df.rename(columns={"Unnamed: 1": "donor_ID", "Unnamed: 2": "severity"}).drop(columns=["Unnamed: 0"])
-df = df.apply(lambda col: col.apply(lambda x: str(float(x.replace('<','').replace('↓','')) / 2)
+# ---- Load data ---- #
+df = pd.read_csv('total_raw_data_CBA_dengue.csv')
+df_cell.to_csv('10x_predicted_celltype_expanded.csv', index_col = 0)
+
+# clean cytokine data
+df = df.apply(lambda col: col.apply(lambda x: float(str(x).replace('<','').replace('↓','')) / 2
                                     if any(c in str(x) for c in ['<', '↓']) else x))
-df = df.apply(lambda x: x.str.replace('<','').str.replace('↓',''))
-df["day"] = df["donor_ID"].str.extract(r"(D-\d+)")
-df["donor_ID"] = df["donor_ID"].str.replace(r"\s*D-\d+", "", regex=True).str.strip().str.upper()
+df = df.apply(lambda col: col.astype(str).str.replace('<','').str.replace('↓',''))
 
-# ---- Load donor metadata ---- #
-meta = pd.read_excel("mauscript_csv/Raw_data_CBA_dengue .xlsx", sheet_name="sheet2")
-meta["donor_ID"] = meta["donor_ID"].astype(str).str.strip().str.upper()
-df = df.merge(meta, on="donor_ID", how="left")
-
-# ---- Load cell type frequency data ---- #
-df_cell = pd.read_csv(
-    "mauscript_csv/10x_asymp_donor_map_gts_ka6_kw40_expanded.csv", index_col="index"
-)
-df_cell = df_cell.rename(columns={"donor_id": "donor_ID", "predicted_id": "cell_predicted"})
-df_cell["donor_ID"] = df_cell["donor_ID"].astype(str).str.strip().str.upper()
-
-# ---- Calculate CD8 cell type frequency per donor ---- #
+# Calculate CD8 cell type frequency per donor 
 counts = df_cell.groupby(["donor_ID", "cell_predicted"]).size().unstack(fill_value=0)
 total_counts = counts.sum(axis=1)
 percentages = counts.div(total_counts, axis=0) * 100
 percentages.reset_index(inplace=True)
 
-# ---- Merge cytokine and CD8 frequency data ---- #
+# Merge cytokine and CD8 frequency data 
 merged = percentages.merge(df, on="donor_ID")
 for col in merged.columns:
     converted = pd.to_numeric(merged[col], errors="coerce")
     if converted.notna().sum() / len(merged) > 0.9:
         merged[col] = converted
 
-# ---- Compute Spearman correlation and p-values ---- #
+# Compute Spearman correlation and p-values 
 def spearman_corr_pval(df):
     cols = df.columns
     rho = pd.DataFrame(index=cols, columns=cols, dtype=float)
@@ -61,7 +48,7 @@ df_numeric = merged.select_dtypes(include=["float64", "int64"])
 corr, pval = spearman_corr_pval(df_numeric)
 corr_filtered = corr.where(pval < 0.05, 0)
 
-# ---- CD8-specific correlation subset ---- #
+# CD8-specific correlation subset 
 cd8_cols = [
     "CX3CR1+ CD8", "CXCR6+ CD8", "Int CD8", 
     "Naive/CM CD8", "Prolif CD8-1", "Prolif CD8-2"
@@ -72,12 +59,12 @@ associated_cytokines = cytokine_assoc[(cytokine_assoc != 0).any(axis=1)].index.t
 subset_vars = cd8_cols + associated_cytokines
 subset_corr = corr_filtered.loc[subset_vars, subset_vars]
 
-# ---- Hierarchical clustering ---- #
+# Hierarchical clustering 
 linkage = hierarchy.linkage(subset_corr, method="ward")
 ordered_idx = hierarchy.dendrogram(linkage, no_plot=True)["leaves"]
 corr_ordered = subset_corr.iloc[ordered_idx, ordered_idx]
 
-# ---- Plot ---- #
+# Plot heatmap 
 plt.figure(figsize=(10, 8))
 sns.heatmap(
     corr_ordered,
@@ -95,10 +82,25 @@ plt.yticks(rotation=0, fontsize=10)
 plt.title("CD8-Associated Cytokine Correlation (p < 0.05)", fontsize=14)
 plt.tight_layout()
 
-os.makedirs("figures", exist_ok=True)
-plt.savefig("figures/cytokine_cd8_correlation.pdf", dpi=300)
-plt.show()
+# ---- set function ---- 
+def plot_var(var):
+    r, p = stats.spearmanr(merged[target], merged[var])
 
-# ---- Print results ---- #
-print("✅ Done. CD8-associated cytokines:")
-print(associated_cytokines)
+    fig, ax = plt.subplots(figsize=(5, 3))
+    sns.scatterplot(data=merged, x=target, y=var, hue="severity",
+                    palette=palette, edgecolor="black", s=50, ax=ax)
+    sns.regplot(data=merged, x=target, y=var, scatter=False, color="black", ax=ax)
+
+    ax.set(xlabel=target, ylabel=var, title=f"{var} vs {target}")
+    ax.legend(title="severity", bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0.)
+    ax.text(0.98, 0.02, f"Spearman r={r:.2f}\np={p:.4f}",
+            transform=ax.transAxes, ha="right", va="bottom")
+
+    fig.tight_layout()
+    plt.show()
+
+
+# ---- Plot cytokine correlation---- #
+for v in vars_to_plot:
+    plot_var(v)
+
