@@ -77,7 +77,7 @@ sc.external.pp.scanorama_integrate(
     batch_size=5000
 )
 
-sc.pp.neighbors(adata, n_neighbors=13, n_pcs=6, use_rep = 'X_scanorama')#6
+sc.pp.neighbors(adata, n_neighbors=13, n_pcs=6, use_rep = 'X_scanorama')
 sc.tl.umap(adata)
 sc.pl.umap(adata)
 
@@ -113,7 +113,9 @@ CD8_Cytotoxic = [
 # Score the gene module
 sc.tl.score_genes(adata, gene_list=CD8_Cytotoxic, score_name='CD8_Cytotoxic_score')
 
-# Visualize the score across clusters (use 'celltype' if previously defined)
+# Visualize the score across clusters 
 with rc_context({'figure.figsize': (4.5, 3)}):
     sc.pl.violin(adata, 'CD8_Cytotoxic_score', groupby='celltype', stripplot=False, inner='box')
 
+#savesfile
+adata.write(‘path/dengue_ss2_celltype_annotaion.h5ad’)
